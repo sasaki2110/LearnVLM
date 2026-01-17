@@ -1,0 +1,36 @@
+# LangGraph関連の依存関係
+# Ubuntu 24.04 + Python 3.12 推奨バージョン
+
+# コア依存関係
+langgraph==1.0.5
+langchain==1.2.0
+langchain-core==1.2.4
+langchain-openai==1.1.6
+langgraph-checkpoint==3.0.1
+langgraph-cli[inmem]==0.4.11
+langsmith==0.5.0
+
+# OpenAI関連
+openai==2.14.0
+
+# 設定管理
+pydantic==2.12.5
+pydantic-settings==2.12.0
+python-dotenv==1.2.1
+
+# テスト関連
+pytest==9.0.2
+
+# 追加の推奨依存関係（Ubuntu 24.04用）
+# HTTPリクエスト用（LangChainが内部的に使用）
+httpx>=0.27.0
+aiohttp>=3.9.0
+
+# 型チェック用（オプション）
+typing-extensions>=4.8.0
+
+# JSON処理（オプション、既に含まれている可能性あり）
+orjson>=3.9.0; platform_system != "Windows"
+
+# ロギング改善（オプション）
+structlog>=24.1.0

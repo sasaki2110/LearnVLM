@@ -141,4 +141,17 @@ apt-get update && apt-get install -y \
 ```
 
 ### 環境変数定義
+```bash
 export DISPLAY=host.docker.internal:0.0
+```
+
+## ステップ４：LangGraphの設定
+
+
+```bash
+# 仮想環境を有効化
+source .venv/bin/activate
+
+# requirements.txtからインストール
+pip install -r requirements_langgraph.txt
+```
