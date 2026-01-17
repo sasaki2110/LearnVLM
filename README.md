@@ -122,3 +122,23 @@ pip install pybullet
 pip install numpy matplotlib
 ```
 
+## GUI で動かす場合
+
+### OpenGL関連のインストール
+```bash
+apt-get update && apt-get install -y \
+    libgl1 \
+    libgl1-mesa-dri \
+    libglx-mesa0 \
+    libegl-mesa0 \
+    libx11-6 \
+    libxext6 \
+    libxrender1 \
+    libxrandr2 \
+    libxfixes3 \
+    libxi6 \
+    libxinerama1
+```
+
+### 環境変数定義
+export DISPLAY=host.docker.internal:0.0

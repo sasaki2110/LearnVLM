@@ -28,12 +28,12 @@ print(f"📸 画像を読み込みました: {image_path}")
 enc_image = model.encode_image(image)
 
 # 3. 質問して回答を得る
-#question = "Describe this image in one sentence."
+question = "Describe this image in one sentence."
 #question = "Locate the bread roll in the image."
 # 「物体検出（Object Detection）」を明示的に指示します
 #question = "Detect the bread roll in the image. Respond with a JSON object containing the coordinates."
 
-question = "Point out the bread roll with a bounding box."
+#question = "Point out the bread roll with a bounding box."
 print(f"❓ 質問: {question}")
 
 answer = model.answer_question(enc_image, question, tokenizer)
