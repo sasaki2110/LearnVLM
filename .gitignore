@@ -21,3 +21,9 @@ __pycache__/
 
 # Pythonパッケージメタデータ（pip install -e .で自動生成）
 *.egg-info/
+
+# 動画
+*.mp4
+
+# LangGraph API
+.langgraph_api/

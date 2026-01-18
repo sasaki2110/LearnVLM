@@ -7,6 +7,7 @@ from PIL import Image
 import time
 
 # --- 1. 環境とVLMの初期化 ---
+#p.connect(p.DIRECT)
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 p.setGravity(0, 0, -9.81)
@@ -32,7 +33,7 @@ duck_id = p.loadURDF("duck_vhacd.urdf", basePosition=duck_target_pos)
 # シミュレーションを少し進める（安定化のため）
 for _ in range(500):
     p.stepSimulation()
-    time.sleep(1./240.)
+    #time.sleep(1./240.)
 
 # アームの関節情報を確認
 num_joints = p.getNumJoints(arm_id)
@@ -91,7 +92,7 @@ def move_arm_to(target_pos):
         p.setJointMotorControl2(arm_id, i, p.POSITION_CONTROL, joint_poses[i])
     for _ in range(200): 
         p.stepSimulation()
-        time.sleep(1./240.)
+        #time.sleep(1./240.)
 
 def get_arm_position():
     """現在のアーム先端位置を取得"""
@@ -123,7 +124,7 @@ def control_gripper(open_width=0.04, force=20.0):
     # グリッパーの動作を反映
     for _ in range(200):  # より長く動作を反映
         p.stepSimulation()
-        time.sleep(1./240.)
+        #time.sleep(1./240.)
 
 def detect_duck_position(show_debug=False, current_arm_pos=None):
     """VLMを使ってアヒルの位置を検出"""

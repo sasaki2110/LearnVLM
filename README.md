@@ -154,4 +154,15 @@ source .venv/bin/activate
 
 # requirements.txtからインストール
 pip install -r requirements_langgraph.txt
+
+# 動画記録用
+pip install opencv-python
 ```
+
+## ステップ５：機械学習環境の設定
+
+```bash
+pip install stable-baselines3 shimmy gymnasium
+```
+
+
