@@ -162,7 +162,8 @@ pip install opencv-python
 ## ステップ５：機械学習環境の設定
 
 ```bash
-pip install stable-baselines3 shimmy gymnasium
+pip install gymnasium stable-baselines3 shimmy pybullet
+pip install opencv-python
 ```
 
 

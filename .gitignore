@@ -27,3 +27,6 @@ __pycache__/
 
 # LangGraph API
 .langgraph_api/
+
+# モデル
+*.zip
