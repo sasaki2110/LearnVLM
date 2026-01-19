@@ -98,6 +98,7 @@ while True:
     height = obs[0]
     roll, pitch = obs[2], obs[3]
     
+    """
     if height < 0.3 or abs(roll) > 0.5 or abs(pitch) > 0.5:
         print(f"⚠️  転倒を検出。リセットします... (高さ: {height:.3f}, roll: {roll:.3f}, pitch: {pitch:.3f})")
         p.resetBasePositionAndOrientation(robot_id, [0, 0, 0.5], [0, 0, 0, 1])
@@ -108,3 +109,4 @@ while True:
             else:
                 p.resetJointState(robot_id, j_idx, 0, 0)
         obs = get_obs()
+    """

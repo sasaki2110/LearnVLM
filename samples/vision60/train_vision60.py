@@ -66,50 +66,27 @@ class Vision60PositionEnv(gym.Env):
         p.stepSimulation()
         obs = self._get_obs()
         
-        height = obs[0]
-        roll, pitch = obs[2], obs[3]
-        base_vel, _ = p.getBaseVelocity(self.robot_id)
+        pos, orn = p.getBasePositionAndOrientation(self.robot_id)
+        euler = p.getEulerFromQuaternion(orn)
+        vel, ang_vel = p.getBaseVelocity(self.robot_id)
         
-        """
-        # --- 報酬設計：より厳格な姿勢制御 ---
-        reward = 1.0  # 基本生存報酬
-        reward -= abs(height - 0.5) * 10.0  # 高さがずれると大幅減点
-        reward -= (abs(roll) + abs(pitch)) * 15.0  # 傾くと超大幅減点（スパルタ）
-        reward += base_vel[0] * 20.0  # 前進への強いインセンティブ
-        # --- 報酬設計：積極的歩行プラン ---
-        reward = 1.0  # 生存報酬
-
-        # 前進報酬を大幅に強化 (これが歩くエネルギーになる)
-        forward_vel = base_vel[0]
-        reward += forward_vel * 100.0  # 5倍に強化！
-
-        # 姿勢と高さの維持（これは「どや顔」の元なので、少し係数を下げるか、許容範囲を広げる）
-        reward -= abs(height - 0.5) * 5.0
-        reward -= (abs(roll) + abs(pitch)) * 10.0
-
-        # 【隠し味】横方向へのフラつきや、その場での回転を抑制
-        reward -= abs(base_vel[1]) * 10.0  # 横歩き禁止
-        reward -= abs(obs[4]) * 5.0        # Yaw（回転）禁止
+        # 1. 終了判定の強化（スパルタ）
+        # 高さが0.35m以下、または Roll/Pitchが45度以上傾いたら即リセット
+        terminated = pos[2] < 0.35 or abs(euler[0]) > 0.8 or abs(euler[1]) > 0.8
         
-        # 終了判定：高さが低い、または大きく傾いたら即終了
-        terminated = height < 0.3 or abs(roll) > 0.5 or abs(pitch) > 0.5
-        """
-
-        # --- 終了判定の強化：つんのめり禁止 ---
-        # pitch < -0.3 は前につんのめっている状態
-        terminated = height < 0.35 or abs(roll) > 0.4 or pitch < -0.3 or pitch > 0.4
+        # 2. 報酬設計（マナー重視）
+        reward = 1.0  # 生存
         
-        # --- 報酬の再設計：頭を擦っても得させない ---
-        reward = 1.0 
-        
-        # 前進報酬：ただし、姿勢がまともな時だけボーナスを出す
-        if height > 0.4 and abs(pitch) < 0.2:
-            reward += base_vel[0] * 150.0  # 良い姿勢での前進は超高得点！
+        # 前進報酬（姿勢が良い時だけ高額に）
+        if abs(euler[0]) < 0.3 and abs(euler[1]) < 0.3:
+            reward += vel[0] * 200.0  # まっすぐ立って進むなら超ボーナス
         else:
-            reward += base_vel[0] * 10.0   # 悪い姿勢（頭擦り）は低得点
+            reward += vel[0] * 20.0   # 転びかけながら進むのは少額
             
-        # 左右へのフラつき制限
-        reward -= abs(base_vel[1]) * 5.0        
+        # 回転への罰則（まっすぐ進ませる）
+        reward -= abs(ang_vel[2]) * 10.0  
+        # 左右へのフラつき罰則
+        reward -= abs(vel[1]) * 10.0
         
         return obs, reward, terminated, False, {}
 
@@ -128,7 +105,8 @@ if __name__ == "__main__":
     # ネットワーク構造を少し深くして、複雑な姿勢を学べるようにする
     policy_kwargs = dict(net_arch=[256, 256])
     
-    model = PPO("MlpPolicy", env, policy_kwargs=policy_kwargs, verbose=1, device="cuda")
+    #model = PPO("MlpPolicy", env, policy_kwargs=policy_kwargs, verbose=1, device="cuda")
+    model = PPO("MlpPolicy", env, policy_kwargs=policy_kwargs, verbose=1, device="cpu")
     
     print("🐕 Vision60 位置制御(Position Control)での学習を開始します...")
     model.learn(total_timesteps=500000)
