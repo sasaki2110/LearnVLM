@@ -149,14 +149,25 @@ export DISPLAY=host.docker.internal:0.0
 
 
 ```bash
+# 仮想化環境を作成
+python3 -m venv .venv
+
 # 仮想環境を有効化
 source .venv/bin/activate
 
-# requirements.txtからインストール
+# pipをアップグレード
+pip install --upgrade pip
+
+# requirements.txtからインストール GPU有り版。　CPUしかない環境は後述。
 pip install -r requirements_langgraph.txt
+
+# CPU しかない環境の依存関係をインストール
+pip install -r requirements_cpu.txt
 
 # 動画記録用
 pip install opencv-python
+
+
 ```
 
 ## ステップ５：機械学習環境の設定
@@ -166,4 +177,67 @@ pip install gymnasium stable-baselines3 shimmy pybullet
 pip install opencv-python
 ```
 
+## ステップ６：機械学習環境の確認
 
+### インストール
+
+```bash
+pip install tensorboard
+```
+
+### ログ出力
+```python
+# GPUがなくても device="cpu" と指定すれば動きます
+model = PPO(
+    "MlpPolicy", 
+    env, 
+    verbose=1, 
+    device="cpu", 
+    tensorboard_log="./ppo_vision_logs/"  # ← ログの保存先を指定
+)
+```
+
+### 起動（別ターミナルで、ディレクトリ階層を合わせて）
+
+```bash
+tensorboard --logdir ./ppo_vision_logs/
+```
+
+###ブラウザで確認。
+
+ブラウザで確認: http://localhost:6006/ を開きます。
+
+### CUSTOM ログ採取
+
+```python
+    def step(self, action):
+        # ... (前述の制御や報酬計算コード) ...
+
+        # --- ログ出力用の情報を info 辞書に入れる ---
+        # ここに書いた数値が TensorBoard で個別のグラフになります
+        info = {
+            "custom/knee_diff": knee_diff_front,  # 左右の足のズレ
+            "custom/height": pos[2],              # 高さ
+            "custom/roll": abs(euler[0]),         # 横揺れ
+            "custom/pitch": abs(euler[1])         # 縦揺れ
+        }
+
+        return obs, reward, terminated, False, info # infoを返す
+```
+
+```python
+from stable_baselines3.common.callbacks import BaseCallback
+
+class TensorboardCallback(BaseCallback):
+    def _on_step(self) -> bool:
+        # info 辞書の中身を TensorBoard に書き出す
+        if "custom/knee_diff" in self.locals["infos"][0]:
+            for key in self.locals["infos"][0].keys():
+                if key.startswith("custom/"):
+                    self.logger.record(key, self.locals["infos"][0][key])
+        return True
+
+# --- 学習開始部分 ---
+callback = TensorboardCallback()
+model.learn(total_timesteps=500000, callback=callback) # callbackを追加
+```

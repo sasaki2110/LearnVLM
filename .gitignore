@@ -30,3 +30,6 @@ __pycache__/
 
 # モデル
 *.zip
+
+# TensorBoardログ
+ppo*logs/

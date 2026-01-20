@@ -1,0 +1,16 @@
+# CPU環境用の依存関係
+# samples/vision60 が動作するための最小限の依存関係
+
+# 物理シミュレーション
+pybullet>=3.0.0
+
+# 数値計算
+numpy>=1.24.0
+
+# 強化学習環境
+gymnasium>=0.29.0
+
+# 強化学習ライブラリ（PPOを使用）
+# stable-baselines3は内部的にtorch（CPU版）を依存関係として持つ
+# その他の依存関係（cloudpickle等）も自動的にインストールされる
+stable-baselines3>=2.0.0
