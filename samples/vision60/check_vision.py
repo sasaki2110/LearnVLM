@@ -25,20 +25,78 @@ print("✅ Vision60ロボットをロードしました")
 joint_indices = [0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14]
 print(f"📊 可動ジョイント数: {len(joint_indices)} (Abduction, Hip, Knee × 4脚)")
 
-# --- 3. 膝を少し曲げて安定させる ---
+# --- 3. 初期姿勢の設定（学習時と同じ：膝を曲げ、Abductionをハの字に） ---
 knee_angle = 1.0  # 膝の角度（ラジアン）
-print(f"🦵 膝を {knee_angle:.2f} rad に曲げて安定させます...")
-for i, j_idx in enumerate(joint_indices):
-    if i in [2, 5, 8, 11]:  # Kneeジョイント（リスト内のインデックス 2, 5, 8, 11）
-        p.resetJointState(robot_id, j_idx, knee_angle)
-        print(f"  ジョイント {j_idx} (Knee) を {knee_angle:.2f} rad に設定")
-    else:
-        p.resetJointState(robot_id, j_idx, 0.0)
+abd_angle = 0.2   # Abduction（肩）の角度（ハの字）
+print(f"🦵 初期姿勢を設定します...")
+print(f"   膝角度: {knee_angle:.2f} rad")
+print(f"   Abduction角度: {abd_angle:.2f} rad (ハの字)")
 
-# --- 4. 安定を待つ（50～500ステップ） ---
+# Abductionジョイントの符号を個別に設定
+# i=0, j_idx=0: 左前（FL）
+# i=3, j_idx=4: 右前（FR）
+# i=6, j_idx=8: 左後ろ（RL）
+# i=9, j_idx=12: 右後ろ（RR）
+abd_signs = {
+    0: 1.0,   # 左前（FL）: +1.0でプラス、-1.0でマイナス
+    3: 1.0,  # 右前（FR）: +1.0でプラス、-1.0でマイナス
+    6: -1.0,   # 左後ろ（RL）: +1.0でプラス、-1.0でマイナス
+    9: -1.0,  # 右後ろ（RR）: +1.0でプラス、-1.0でマイナス
+}
+
+for i, j_idx in enumerate(joint_indices):
+    if i in [0, 3, 6, 9]:  # Abductionジョイント (ハの字)
+        init_pos = abd_angle * abd_signs[i]
+        leg_names = {0: "FL", 3: "FR", 6: "RL", 9: "RR"}
+        leg = leg_names[i]
+        p.resetJointState(robot_id, j_idx, init_pos)
+        print(f"  ジョイント {j_idx} (Abduction {leg}) を {init_pos:+.2f} rad に設定")
+    elif i in [2, 5, 8, 11]:  # Kneeジョイント
+        init_pos = knee_angle
+        p.resetJointState(robot_id, j_idx, init_pos)
+        print(f"  ジョイント {j_idx} (Knee) を {init_pos:.2f} rad に設定")
+    else:  # Hip
+        init_pos = 0.0
+        p.resetJointState(robot_id, j_idx, init_pos)
+
+# 初期状態で崩れないようモーターを保持（学習時と同じ）
+print(f"\n🔧 モーター制御を設定します（force=150.0）...")
+for i, j_idx in enumerate(joint_indices):
+    if i in [0, 3, 6, 9]:  # Abduction
+        init_pos = abd_angle * abd_signs[i]
+    elif i in [2, 5, 8, 11]:  # Knee
+        init_pos = knee_angle
+    else:  # Hip
+        init_pos = 0.0
+    
+    p.setJointMotorControl2(
+        robot_id, j_idx, p.POSITION_CONTROL,
+        targetPosition=init_pos, force=150.0
+    )
+print("✅ モーター制御を設定しました")
+
+# --- 4. 初期姿勢の確認（ジョイント角度を表示） ---
+print(f"\n📐 設定後のジョイント角度を確認します...")
+for i, j_idx in enumerate(joint_indices):
+    joint_state = p.getJointState(robot_id, j_idx)
+    current_angle = joint_state[0]
+    joint_info = p.getJointInfo(robot_id, j_idx)
+    joint_name = joint_info[1].decode('utf-8') if joint_info[1] else f"joint_{j_idx}"
+    
+    if i in [0, 3, 6, 9]:  # Abduction
+        side = "左" if i in [0, 6] else "右"
+        expected = abd_angle if i in [0, 6] else -abd_angle
+        print(f"  ジョイント {j_idx} ({joint_name}, Abduction {side}): {current_angle:+.3f} rad (期待値: {expected:+.3f} rad)")
+    elif i in [2, 5, 8, 11]:  # Knee
+        print(f"  ジョイント {j_idx} ({joint_name}, Knee): {current_angle:+.3f} rad (期待値: {knee_angle:+.3f} rad)")
+    else:  # Hip
+        print(f"  ジョイント {j_idx} ({joint_name}, Hip): {current_angle:+.3f} rad (期待値: 0.000 rad)")
+
+# --- 5. 安定を待つ（50～500ステップ） ---
 stability_steps = 500  # 安定を待つステップ数
 print(f"\n⏳ {stability_steps}ステップ安定を待ちます...")
-print("   ロボットが立っていられるか確認します\n")
+print("   ロボットが立っていられるか確認します")
+print("   GUIでハの字姿勢を確認してください\n")
 
 # 状態を記録するリスト
 height_history = []
@@ -75,7 +133,7 @@ for step in range(stability_steps):
         print(f"   高さ: {height:.3f}m, Roll: {roll:.3f}rad, Pitch: {pitch:.3f}rad")
         break
 
-# --- 5. 結果の確認と表示 ---
+# --- 6. 結果の確認と表示 ---
 print("\n" + "="*60)
 print("📊 安定性確認結果")
 print("="*60)
@@ -118,8 +176,15 @@ else:
 
 print("\n💡 ヒント:")
 print("   - 膝の角度を調整: knee_angle を変更（0.5～1.5程度）")
+print("   - Abduction角度を調整: abd_angle を変更（0.1～0.3程度）")
 print("   - スポーン高さを調整: spawn_height を変更（0.2～0.4程度）")
-print("   - 他のジョイントも初期化: AbductionやHipの角度も調整可能")
+print("\n📐 ハの字制御の確認:")
+print("   - 各Abductionジョイントの符号は abd_signs で個別に設定できます")
+print("   - i=0 (左前/FL): abd_signs[0] * abd_angle")
+print("   - i=3 (右前/FR): abd_signs[3] * abd_angle")
+print("   - i=6 (左後ろ/RL): abd_signs[6] * abd_angle")
+print("   - i=9 (右後ろ/RR): abd_signs[9] * abd_angle")
+print("   - +1.0でプラス方向、-1.0でマイナス方向になります")
 
 print("\n⏸️  Enterキーを押すと終了します...")
 input()
